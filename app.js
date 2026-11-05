@@ -43,8 +43,27 @@ async function tx(mode, work) {
     t.onerror = t.onabort = () => reject(t.error);
   });
 }
-const dbAll = () => tx('readonly', s => s.getAll());
-const dbPut = game => tx('readwrite', s => s.put(game));
+
+/* Covers are stored as raw bytes: Safari can fail to display Blobs read back from IndexedDB. */
+const jpeg = bytes => new Blob([bytes], { type: 'image/jpeg' });
+
+async function fromStorage({ coverBytes, ...record }) {
+  if (coverBytes) return { ...record, cover: jpeg(coverBytes) };
+  if (!(record.cover instanceof Blob)) return record;
+  try {  // saved by an earlier version; a null cover is re-downloaded on the next sync
+    const bytes = await record.cover.arrayBuffer();
+    return { ...record, cover: bytes.byteLength ? jpeg(bytes) : null };
+  } catch {
+    return { ...record, cover: null };
+  }
+}
+
+const dbAll = async () => Promise.all((await tx('readonly', s => s.getAll())).map(fromStorage));
+
+async function dbPut({ cover, ...record }) {
+  const coverBytes = cover ? await cover.arrayBuffer() : null;
+  return tx('readwrite', s => s.put({ ...record, coverBytes }));
+}
 
 const store = {
   get(key) { try { return localStorage.getItem(key); } catch { return null; } },
@@ -123,6 +142,16 @@ function coverUrl(blob) {
 }
 const coverSrc = game => (game.cover ? coverUrl(game.cover) : game.coverPath || null);
 
+/* If this device's copy won't display, use the published file, then a plain tile. */
+function coverImage(game, alt) {
+  const image = el('img', { src: coverSrc(game), alt });
+  image.addEventListener('error', () => {
+    if (game.coverPath && image.getAttribute('src') !== game.coverPath) image.src = game.coverPath;
+    else image.replaceWith(blankCover(game.title));
+  });
+  return image;
+}
+
 /* ---------- Shelf ---------- */
 let games = [];
 let publicView = false;  // a visitor looking at the published shelf, so nothing is editable
@@ -174,13 +203,13 @@ function caseButton(game) {
   button.style.setProperty('--brand', brandColour(game.platform));
 
   const src = coverSrc(game);
-  fitCover(button, coverRatios.get(src) || CASE_RATIO);
+  fitCover(button, coverRatios.get(game.id) || CASE_RATIO);
   const frame = el('span', { className: 'frame' });
   if (src) {
-    const image = el('img', { src, alt: '' });
+    const image = coverImage(game, '');
     image.addEventListener('load', () => {
       const ratio = image.naturalWidth / image.naturalHeight;
-      coverRatios.set(src, ratio);
+      coverRatios.set(game.id, ratio);
       fitCover(button, ratio);
     });
     frame.append(image);
@@ -331,7 +360,7 @@ function renderCover() {
   const save = $('saveCover');
   const src = coverSrc(draft);
   preview.replaceChildren(src
-    ? el('img', { src, alt: `Cover of ${draft.title}` })
+    ? coverImage(draft, `Cover of ${draft.title}`)
     : blankCover(draft.title || 'No cover yet'));
   save.hidden = !src;
   if (src) {
