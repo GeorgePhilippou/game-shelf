@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Game Shelf</title>
 <meta name="description" content="A personal shelf of the games I own, play and have played.">
-<meta name="theme-color" content="#f7f5f0">
+<meta name="theme-color" content="#123a63">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23c8281a'/%3E%3Crect x='8' y='7' width='16' height='18' fill='%23f7f5f0'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="styles.css?v=gallery2">
+<link rel="stylesheet" href="styles.css?v=store2">
 </head>
 <body>
 <header class="top">
@@ -17,12 +17,12 @@
   </div>
   <div class="tools">
     <input id="filter" type="search" placeholder="Search your shelf" aria-label="Search your shelf">
-    <label class="pick">Shelves
+    <label class="pick">Arrange
       <select id="groupBy">
-        <option value="status">By status</option>
         <option value="platform">By platform</option>
+        <option value="genre">By genre</option>
+        <option value="status">By status</option>
         <option value="format">By ownership</option>
-        <option value="none">One big shelf</option>
       </select>
     </label>
     <label class="pick">Order
@@ -79,6 +79,7 @@
           <label>Release year <input id="fYear" type="number" min="1950" max="2100" inputmode="numeric"></label>
         </div>
         <datalist id="platforms"></datalist>
+        <datalist id="genres"></datalist>
         <div class="two">
           <label>Status
             <select id="fStatus"></select>
@@ -88,7 +89,10 @@
           </label>
         </div>
         <div class="two">
+          <label>Genre <input id="fGenre" list="genres" maxlength="40" placeholder="Filled in for you"></label>
           <label>Date finished <input id="fFinished" type="date"></label>
+        </div>
+        <div>
           <fieldset class="stars-field">
             <legend>Rating</legend>
             <div id="stars" class="stars"></div>
@@ -138,7 +142,8 @@
 </dialog>
 
 <div id="toast" class="toast" role="status" hidden></div>
-<script src="sync.js?v=gallery2"></script>
-<script src="app.js?v=gallery2"></script>
+<script src="lookup.js?v=store2"></script>
+<script src="sync.js?v=store2"></script>
+<script src="app.js?v=store2"></script>
 </body>
 </html>

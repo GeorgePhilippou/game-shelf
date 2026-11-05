@@ -1,0 +1,36 @@
+name: Find upright covers
+
+on:
+  push:
+    branches: [main]
+    paths: [library.json]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: upright-covers
+
+jobs:
+  covers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/find-upright-covers.mjs
+      - name: Save any new covers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git add library.json covers
+          git diff --cached --quiet && exit 0
+          git config user.name "game-shelf-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add upright covers"
+          git pull --rebase origin main
+          git push origin main
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" || true

@@ -156,15 +156,15 @@ function coverImage(game, alt) {
 let games = [];
 let publicView = false;  // a visitor looking at the published shelf, so nothing is editable
 
-function brandColour(platform = '') {
-  const p = platform.toLowerCase();
-  if (/ps\d|playstation|psp|vita/.test(p)) return '#2f6fd0';
-  if (/xbox/.test(p)) return '#2e9440';
-  if (/switch|wii|gamecube|n64|nintendo|\bds\b|3ds|game boy|snes|nes/.test(p)) return '#d6352c';
-  if (/pc|steam|windows/.test(p)) return '#5a6b7b';
-  if (/mac|ios|iphone|ipad|mobile|android/.test(p)) return '#7a54b5';
-  return '#8a7a6c';
-}
+const FAMILIES = [
+  ['PlayStation', /ps\d|ps vita|playstation|psp|vita/i, '#1b4fa0'],
+  ['Xbox', /xbox/i, '#1f7a34'],
+  ['Nintendo', /switch|wii|gamecube|n64|nintendo|\bds\b|3ds|game ?boy|snes|\bnes\b/i, '#c8281a'],
+  ['PC & Mac', /\bpc\b|steam|windows|\bmac\b|macos|linux/i, '#3f4b57'],
+  ['Mobile & Tablet', /ios|iphone|ipad|mobile|android|tablet/i, '#6c4aa8'],
+];
+const OTHER_FAMILY = ['Other Platforms', /$^/, '#6e665c'];
+const familyOf = (platform = '') => FAMILIES.find(([, rule]) => rule.test(platform)) || OTHER_FAMILY;
 
 function el(tag, props = {}, ...children) {
   const node = Object.assign(document.createElement(tag), props);
@@ -176,53 +176,60 @@ function blankCover(title) {
   return el('div', { className: 'blank', textContent: title });
 }
 
-/* Covers come in every shape, so each keeps its true proportions at a similar visual size. */
-const CASE_RATIO = 5 / 7;
-const coverRatios = new Map();
+/* Every game stands as an upright case. Art that isn't upright sits on a sleeve in its own colour. */
+const UPRIGHT = [0.6, 0.86];
 
-function fitCover(button, ratio) {
-  let width = Math.min(Math.sqrt(ratio / CASE_RATIO), 1.7);
-  let height = width * CASE_RATIO / ratio;
-  if (height > 1.1) {
-    height = 1.1;
-    width = height * ratio / CASE_RATIO;
+function averageColour(image) {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(image, 0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    return `rgb(${Math.round(r * 0.7)} ${Math.round(g * 0.7)} ${Math.round(b * 0.7)})`;
+  } catch {
+    return '#3a3a3a';
   }
-  button.style.setProperty('--fw', width.toFixed(3));
-  button.style.setProperty('--fh', height.toFixed(3));
-  button.style.setProperty('--ratio', ratio.toFixed(4));
 }
 
-function caseButton(game) {
+function caseArt(game) {
+  const art = el('span', { className: 'art' });
+  if (!coverSrc(game)) {
+    art.append(blankCover(game.title));
+    return art;
+  }
+  const image = coverImage(game, '');
+  image.addEventListener('load', () => {
+    const ratio = image.naturalWidth / image.naturalHeight;
+    if (ratio >= UPRIGHT[0] && ratio <= UPRIGHT[1]) return;
+    art.classList.add('sleeve');
+    art.style.setProperty('--tone', averageColour(image));
+    art.append(el('span', { className: 'sleeve-title', textContent: game.title }));
+  });
+  art.append(image);
+  return art;
+}
+
+function caseButton(game, shelfLabel) {
+  const [familyName, , colour] = familyOf(game.platform);
   const button = el('button', {
     type: 'button',
-    className: `game${game.format === 'former' ? ' gone' : ''}`,
+    className: `game${game.format === 'former' ? ' gone' : ''}${shelfLabel ? ' first' : ''}`,
     title: game.title,
   });
+  if (shelfLabel) button.append(el('span', { className: 'run', textContent: shelfLabel }));
   const status = label(STATUSES, game.status);
-  const details = [game.platform, status, game.rating ? `${game.rating} out of 5` : ''];
+  const details = [game.platform, game.genre, status, game.rating ? `${game.rating} out of 5` : ''];
   button.setAttribute('aria-label', [game.title, ...details].filter(Boolean).join(', '));
-  button.style.setProperty('--brand', brandColour(game.platform));
+  button.style.setProperty('--brand', colour);
 
-  const src = coverSrc(game);
-  fitCover(button, coverRatios.get(game.id) || CASE_RATIO);
-  const frame = el('span', { className: 'frame' });
-  if (src) {
-    const image = coverImage(game, '');
-    image.addEventListener('load', () => {
-      const ratio = image.naturalWidth / image.naturalHeight;
-      coverRatios.set(game.id, ratio);
-      fitCover(button, ratio);
-    });
-    frame.append(image);
-  } else {
-    frame.append(blankCover(game.title));
-  }
-
-  const meta = el('small', {}, el('i', { className: 'dot' }), game.platform || status);
-  if (game.rating) meta.append(el('span', { className: 'score', textContent: ` ★ ${game.rating}` }));
-  button.append(
-    el('span', { className: 'stand' }, frame),
-    el('span', { className: 'caption' }, el('b', { textContent: game.title }), meta));
+  const box = el('span', { className: 'box' },
+    el('span', { className: 'band', textContent: game.platform || familyName }),
+    caseArt(game));
+  if (game.status === 'playing') box.append(el('span', { className: 'sticker', textContent: 'Playing' }));
+  const tag = el('span', { className: 'tag' }, el('span', { className: 'tag-title', textContent: game.title }));
+  if (game.rating) tag.append(el('span', { className: 'score', textContent: `★${game.rating}` }));
+  button.append(box, tag);
   button.addEventListener('click', () => openEditor(game));
   return button;
 }
@@ -234,12 +241,41 @@ const sorters = {
   year: (a, b) => (b.year || 0) - (a.year || 0) || a.title.localeCompare(b.title),
 };
 
-function sections(list, groupBy) {
-  if (groupBy === 'none') return [['All games', list]];
-  if (groupBy === 'status') return STATUSES.map(([k, name]) => [name, list.filter(g => g.status === k)]);
-  if (groupBy === 'format') return FORMATS.map(([k, name]) => [name, list.filter(g => g.format === k)]);
-  const names = [...new Set(list.map(g => g.platform || 'No platform set'))].sort((a, b) => a.localeCompare(b));
-  return names.map(name => [name, list.filter(g => (g.platform || 'No platform set') === name)]);
+function groupGames(list, keyOf) {
+  const groups = new Map();
+  for (const game of list) {
+    const key = keyOf(game);
+    groups.set(key, [...(groups.get(key) || []), game]);
+  }
+  return groups;
+}
+
+const genreOf = game => game.genre || 'Other';
+const familyNameOf = game => familyOf(game.platform)[0];
+
+/* The wall: one bay per main category, one run of shelves per subcategory inside it. */
+function wallBays(list, view, showEmpty) {
+  const [bayKey, shelfKey, names] = {
+    platform: [familyNameOf, genreOf, [...FAMILIES.map(([name]) => name), OTHER_FAMILY[0]]],
+    genre: [genreOf, familyNameOf, GENRES],
+    status: [g => label(STATUSES, g.status), familyNameOf, STATUSES.map(([, name]) => name)],
+    format: [g => label(FORMATS, g.format), familyNameOf, FORMATS.map(([, name]) => name)],
+  }[view];
+  const bays = groupGames(list, bayKey);
+  return names
+    .filter(name => bays.has(name) || (showEmpty && name !== OTHER_FAMILY[0]))
+    .map(name => [name, [...groupGames(bays.get(name) || [], shelfKey)].sort(([a], [b]) => a.localeCompare(b))]);
+}
+
+function bayElement(name, shelves) {
+  const count = shelves.reduce((sum, [, items]) => sum + items.length, 0);
+  return el('section', { className: 'bay' },
+    el('header', { className: 'sign' },
+      el('h2', { textContent: 'Video Games' }),
+      el('span', { textContent: name })),
+    el('div', { className: 'rack' },
+      ...shelves.flatMap(([shelf, items]) => items.map((game, i) => caseButton(game, i === 0 ? shelf : null)))),
+    el('div', { className: `spare${count ? '' : ' empty-bay'}` }));
 }
 
 function render() {
@@ -255,25 +291,16 @@ function render() {
   $('stats').replaceChildren(...(games.length
     ? [stat(games.length, games.length === 1 ? 'game' : 'games'), stat(finished, 'finished'), stat(physical, 'physical'),
       stat(platforms, platforms === 1 ? 'platform' : 'platforms')]
-    : [el('span', { textContent: 'Every game you own, play and have played' })]));
+    : [el('span', { textContent: 'Add a game and it finds its own place on the shelves' })]));
 
+  const view = $('groupBy').value;
   const library = $('library');
   library.replaceChildren();
-  if (!games.length) {
-    const start = el('button', { type: 'button', className: 'primary', textContent: 'Add your first game' });
-    start.addEventListener('click', () => openEditor());
-    library.append(el('div', { className: 'empty' },
-      el('h2', { textContent: 'Nothing on the shelf yet' }),
-      el('p', { textContent: 'Type a game’s name and its box art is saved with your entry.' }),
-      start));
-  } else if (!list.length) {
+  if (games.length && !list.length) {
     library.append(el('div', { className: 'empty' }, el('h2', { textContent: 'No games match that search' })));
-  }
-  for (const [name, items] of list.length ? sections(list, $('groupBy').value) : []) {
-    if (!items.length) continue;
-    library.append(
-      el('div', { className: 'section-head' }, el('h2', { textContent: name }), el('span', { textContent: items.length })),
-      el('div', { className: 'shelf' }, ...items.map(caseButton)));
+  } else {
+    const bays = wallBays(list, view, !query && view === 'platform');
+    library.append(el('div', { className: 'wall' }, ...bays.map(([name, shelves]) => bayElement(name, shelves))));
   }
   $('addBtn').hidden = publicView;
   for (const id of ['backupBtn', 'restoreBtn']) $(id).hidden = publicView;
@@ -301,7 +328,7 @@ function blankDraft() {
   return {
     id: crypto.randomUUID(), title: '', platform: store.get('lastPlatform') || '', year: null,
     status: 'finished', format: store.get('lastFormat') || 'physical',
-    finished: '', rating: 0, notes: '', cover: null, sourcePage: '', added: Date.now(), isNew: true,
+    finished: '', rating: 0, notes: '', genre: '', cover: null, sourcePage: '', added: Date.now(), isNew: true,
   };
 }
 
@@ -332,6 +359,7 @@ function fillForm() {
   $('fTitle').value = draft.title;
   $('fPlatform').value = draft.platform;
   $('fYear').value = draft.year || '';
+  $('fGenre').value = draft.genre || '';
   $('fStatus').value = draft.status;
   $('fFormat').value = draft.format;
   $('fFinished').value = draft.finished;
@@ -342,7 +370,7 @@ function fillForm() {
   $('saveBtn').hidden = publicView;
   $('findCover').hidden = publicView;
   $('uploadCover').hidden = publicView;
-  for (const id of ['fTitle', 'fPlatform', 'fYear', 'fStatus', 'fFormat', 'fFinished', 'fNotes']) $(id).disabled = publicView;
+  for (const id of ['fTitle', 'fPlatform', 'fYear', 'fGenre', 'fStatus', 'fFormat', 'fFinished', 'fNotes']) $(id).disabled = publicView;
   $('deleteBtn').textContent = 'Remove from shelf';
   renderStars();
   renderCover();
@@ -352,6 +380,7 @@ function readForm() {
   draft.title = $('fTitle').value.trim();
   draft.platform = $('fPlatform').value.trim();
   draft.year = Number($('fYear').value) || null;
+  draft.genre = $('fGenre').value.trim();
   draft.status = $('fStatus').value;
   draft.format = $('fFormat').value;
   draft.finished = $('fFinished').value;
@@ -425,7 +454,10 @@ async function chooseResult(item) {
   try {
     draft.cover = await downloadCover(item.image);
     draft.coverPath = null;
+    draft.coverCustom = false;
+    draft.coverUpright = false;
     draft.sourcePage = item.pageTitle;
+    await addLookups(draft, item.title);
   } catch (err) {
     console.error(err);
     $('searchStatus').textContent = 'That cover would not download. Try another, or carry on without it.';
@@ -442,6 +474,39 @@ async function chooseResult(item) {
   coverOnly = false;
   showStep('form');
   if (draft.isNew) $('fPlatform').focus();
+}
+
+/* Fills in the genre and, where Steam has it, swaps in upright box art. */
+async function addLookups(game, title = game.title) {
+  const { genre, steamId } = await lookupGame({ title, sourcePage: game.sourcePage });
+  game.genreChecked = true;
+  if (genre && !game.genre) game.genre = genre;
+  if (!steamId) return;
+  game.steamId = steamId;
+  if (game.coverCustom || game.coverUpright) return;
+  try {
+    game.cover = await uprightCover(steamId);
+    game.coverPath = null;
+    game.coverUpright = true;
+  } catch { /* newer Steam games: the repo's robot finds these */ }
+}
+
+/* Sorts games saved before genres existed. */
+async function enrichLibrary() {
+  const pending = (await dbAll()).filter(g => !g.deleted && !g.genre && !g.genreChecked);
+  for (const game of pending) {
+    try {
+      await addLookups(game);
+    } catch (err) {
+      console.error(err);
+      continue;
+    }
+    await dbPut({ ...game, updated: Date.now() });
+  }
+  if (pending.length) {
+    await reloadGames();
+    scheduleSync(500);
+  }
 }
 
 async function saveDraft(event) {
@@ -621,15 +686,15 @@ async function start() {
   fillSelect($('fStatus'), STATUSES);
   fillSelect($('fFormat'), FORMATS);
   $('platforms').append(...PLATFORMS.map(value => el('option', { value })));
-  $('groupBy').value = store.get('groupBy') || 'status';
+  $('genres').append(...GENRES.map(value => el('option', { value })));
+  $('groupBy').value = store.get('view') || 'platform';
   $('sortBy').value = store.get('sortBy') || 'added';
 
   $('addBtn').addEventListener('click', () => openEditor());
   $('closeEditor').addEventListener('click', () => $('editor').close());
   $('filter').addEventListener('input', render);
-  for (const id of ['groupBy', 'sortBy']) {
-    $(id).addEventListener('change', () => { store.set(id, $(id).value); render(); });
-  }
+  $('groupBy').addEventListener('change', () => { store.set('view', $('groupBy').value); render(); });
+  $('sortBy').addEventListener('change', () => { store.set('sortBy', $('sortBy').value); render(); });
   $('gameSearch').addEventListener('input', debounce(runSearch, 350));
   $('manualBtn').addEventListener('click', () => {
     draft.title = $('gameSearch').value.trim();
@@ -650,6 +715,7 @@ async function start() {
     try {
       draft.cover = await toCoverBlob(file);
       draft.coverPath = null;
+      draft.coverCustom = true;
       draft.sourcePage = '';
       renderCover();
     } catch (err) {
@@ -684,8 +750,9 @@ async function start() {
   }
   render();
   if (isConnected()) {
-    syncNow();
     navigator.storage?.persist?.();
+    await syncNow();
+    enrichLibrary();
   }
 }
 
