@@ -133,7 +133,7 @@ function brandColour(platform = '') {
   if (/xbox/.test(p)) return '#2c7d32';
   if (/switch|wii|gamecube|n64|nintendo|\bds\b|3ds|game boy|snes|nes/.test(p)) return '#c5302b';
   if (/pc|steam|windows/.test(p)) return '#3d4a57';
-  if (/mac|ios|iphone|mobile|android/.test(p)) return '#6a5a7d';
+  if (/mac|ios|iphone|ipad|mobile|android/.test(p)) return '#6a5a7d';
   return '#5c5048';
 }
 

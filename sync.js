@@ -100,7 +100,8 @@ async function pushCommit(head, entries) {
 
 async function downloadRepoCover(path) {
   const res = await github(`/contents/${path}?ref=${REPO.branch}`, { accept: 'application/vnd.github.raw+json' });
-  return res.blob();
+  // GitHub labels this response with its own type, not as an image.
+  return new Blob([await res.arrayBuffer()], { type: 'image/jpeg' });
 }
 
 /* Writes the merged result back, skipping anything edited on this device during the sync. */
