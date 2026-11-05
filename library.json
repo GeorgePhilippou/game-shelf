@@ -1,0 +1,21 @@
+{
+ "app": "game-shelf",
+ "version": 2,
+ "games": [
+  {
+   "added": 1793916581437,
+   "coverPath": "covers/c02e7d8d-d7b7-4084-b458-16b9c10fb837-mw43nc5s.jpg",
+   "finished": "2026-09-01",
+   "format": "digital",
+   "id": "c02e7d8d-d7b7-4084-b458-16b9c10fb837",
+   "notes": "",
+   "platform": "iPad",
+   "rating": 0,
+   "sourcePage": "Servant of the Lake",
+   "status": "finished",
+   "title": "Servant of the Lake",
+   "updated": 1793916630813,
+   "year": 2026
+  }
+ ]
+}
