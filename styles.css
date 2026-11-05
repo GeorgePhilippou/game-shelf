@@ -150,6 +150,7 @@ button { cursor: pointer; }
   max-width: 1280px; margin: 0 auto; padding: 0 32px 36px;
   color: var(--muted); font-size: 14px;
 }
+.foot span:empty { display: none; }
 .credit { margin-left: auto; }
 
 dialog {
