@@ -185,7 +185,7 @@ dialog::backdrop { background: rgba(8, 5, 3, .72); }
 .stars-field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .stars-field legend { padding: 0; margin-bottom: 4px; }
 .stars { display: flex; }
-.star { background: none; border: 0; padding: 3px 4px; font-size: 25px; line-height: 1.2; color: var(--line); }
+.star { background: none; border: 0; padding: 3px 2px; font-size: 24px; line-height: 1.2; color: var(--line); }
 .star.on { color: #ffc45e; }
 .error { color: var(--danger); margin: 12px 0 0; }
 .dlg-actions { display: flex; gap: 10px; margin-top: 18px; }
@@ -224,6 +224,7 @@ dialog::backdrop { background: rgba(8, 5, 3, .72); }
   dialog { padding: 16px; }
   .form-grid { grid-template-columns: 1fr; }
   .cover-col { grid-template-columns: 110px 1fr; }
-  .cover-preview { grid-row: span 4; }
+  .cover-preview { grid-row: span 4; align-self: start; min-height: 0; }
+  .star { font-size: 22px; padding: 3px 1px; }
 }
 @media (prefers-reduced-motion: reduce) { .frame { transition: none; } }
