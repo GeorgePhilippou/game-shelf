@@ -4,7 +4,7 @@
  "games": [
   {
    "added": 1793916581437,
-   "coverPath": "covers/c02e7d8d-d7b7-4084-b458-16b9c10fb837-mw43nc5s.jpg",
+   "coverPath": "covers/c02e7d8d-d7b7-4084-b458-16b9c10fb837-upright-mw44yt4q.jpg",
    "finished": "2026-09-01",
    "format": "digital",
    "id": "c02e7d8d-d7b7-4084-b458-16b9c10fb837",
@@ -14,8 +14,10 @@
    "sourcePage": "Servant of the Lake",
    "status": "finished",
    "title": "Servant of the Lake",
-   "updated": 1793916630813,
-   "year": 2026
+   "updated": 1793918852090,
+   "year": 2026,
+   "coverUpright": true,
+   "steamId": "3636770"
   }
  ]
 }
