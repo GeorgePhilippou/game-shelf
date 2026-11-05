@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game Shelf</title>
+<meta name="description" content="A personal shelf of the games I own, play and have played.">
+<meta name="theme-color" content="#1b1410">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231b1410'/%3E%3Crect x='6' y='5' width='6' height='18' fill='%23d9633f'/%3E%3Crect x='13' y='8' width='6' height='15' fill='%23e8b65a'/%3E%3Crect x='20' y='5' width='6' height='18' fill='%234d8fbf'/%3E%3Crect x='3' y='23' width='26' height='4' fill='%238a5a35'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Game Shelf</h1>
+    <p id="stats" class="stats"></p>
+  </div>
+  <div class="tools">
+    <input id="filter" type="search" placeholder="Search your shelf" aria-label="Search your shelf">
+    <label class="pick">Shelves
+      <select id="groupBy">
+        <option value="status">By status</option>
+        <option value="platform">By platform</option>
+        <option value="format">By ownership</option>
+        <option value="none">One big shelf</option>
+      </select>
+    </label>
+    <label class="pick">Order
+      <select id="sortBy">
+        <option value="added">Recently added</option>
+        <option value="title">Title</option>
+        <option value="rating">Rating</option>
+        <option value="year">Release year</option>
+      </select>
+    </label>
+    <button id="addBtn" class="primary" type="button">Add a game</button>
+  </div>
+</header>
+
+<main id="library"></main>
+
+<footer class="foot">
+  <span id="backupNote"></span>
+  <button id="backupBtn" class="link" type="button">Download backup</button>
+  <button id="restoreBtn" class="link" type="button">Restore backup</button>
+  <input id="restoreFile" type="file" accept="application/json,.json" hidden>
+  <span class="credit">Cover art comes from Wikipedia and belongs to its publishers.</span>
+</footer>
+
+<dialog id="editor" aria-labelledby="editorTitle">
+  <div class="dlg-head">
+    <h2 id="editorTitle">Add a game</h2>
+    <button id="closeEditor" class="icon" type="button" aria-label="Close">&times;</button>
+  </div>
+
+  <section id="searchStep">
+    <input id="gameSearch" type="search" placeholder="Type a game's name" aria-label="Game name" autocomplete="off">
+    <p id="searchStatus" class="hint" role="status"></p>
+    <div id="results" class="results"></div>
+    <button id="manualBtn" class="link" type="button">Add it by hand without a cover</button>
+  </section>
+
+  <form id="gameForm" hidden>
+    <div class="form-grid">
+      <div class="cover-col">
+        <div id="coverPreview" class="cover-preview"></div>
+        <button id="findCover" class="ghost" type="button">Find a cover</button>
+        <button id="uploadCover" class="ghost" type="button">Use my own image</button>
+        <input id="coverFile" type="file" accept="image/*" hidden>
+        <a id="saveCover" class="ghost" hidden>Download cover</a>
+        <a id="sourceLink" class="hint" target="_blank" rel="noopener" hidden>Wikipedia page</a>
+      </div>
+      <div class="field-col">
+        <label>Title <input id="fTitle" required maxlength="160"></label>
+        <div class="two">
+          <label>Platform <input id="fPlatform" list="platforms" maxlength="60" placeholder="PS5, Switch, PC"></label>
+          <label>Release year <input id="fYear" type="number" min="1950" max="2100" inputmode="numeric"></label>
+        </div>
+        <datalist id="platforms"></datalist>
+        <div class="two">
+          <label>Status
+            <select id="fStatus"></select>
+          </label>
+          <label>Ownership
+            <select id="fFormat"></select>
+          </label>
+        </div>
+        <div class="two">
+          <label>Date finished <input id="fFinished" type="date"></label>
+          <fieldset class="stars-field">
+            <legend>Rating</legend>
+            <div id="stars" class="stars"></div>
+          </fieldset>
+        </div>
+        <label>Notes <textarea id="fNotes" rows="3" maxlength="2000" placeholder="Memories, where you got it, who you played with"></textarea></label>
+      </div>
+    </div>
+    <p id="formError" class="error" role="alert" hidden></p>
+    <div class="dlg-actions">
+      <button id="deleteBtn" class="danger" type="button" hidden>Remove from shelf</button>
+      <span class="spacer"></span>
+      <button class="primary" type="submit">Save to shelf</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
