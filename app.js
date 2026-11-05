@@ -157,13 +157,13 @@ let games = [];
 let publicView = false;  // a visitor looking at the published shelf, so nothing is editable
 
 const FAMILIES = [
-  ['PlayStation', /ps\d|ps vita|playstation|psp|vita/i, '#1b4fa0'],
-  ['Xbox', /xbox/i, '#1f7a34'],
-  ['Nintendo', /switch|wii|gamecube|n64|nintendo|\bds\b|3ds|game ?boy|snes|\bnes\b/i, '#c8281a'],
-  ['PC & Mac', /\bpc\b|steam|windows|\bmac\b|macos|linux/i, '#3f4b57'],
-  ['Mobile & Tablet', /ios|iphone|ipad|mobile|android|tablet/i, '#6c4aa8'],
+  ['PlayStation', /ps\d|ps vita|playstation|psp|vita/i, '#3f6a9e'],
+  ['Xbox', /xbox/i, '#5b8a55'],
+  ['Nintendo', /switch|wii|gamecube|n64|nintendo|\bds\b|3ds|game ?boy|snes|\bnes\b/i, '#c0553f'],
+  ['PC & Mac', /\bpc\b|steam|windows|\bmac\b|macos|linux/i, '#6b6456'],
+  ['Mobile & Tablet', /ios|iphone|ipad|mobile|android|tablet/i, '#84689b'],
 ];
-const OTHER_FAMILY = ['Other Platforms', /$^/, '#6e665c'];
+const OTHER_FAMILY = ['Other Platforms', /$^/, '#8a7560'];
 const familyOf = (platform = '') => FAMILIES.find(([, rule]) => rule.test(platform)) || OTHER_FAMILY;
 
 function el(tag, props = {}, ...children) {
@@ -267,15 +267,25 @@ function wallBays(list, view, showEmpty) {
     .map(name => [name, [...groupGames(bays.get(name) || [], shelfKey)].sort(([a], [b]) => a.localeCompare(b))]);
 }
 
-function bayElement(name, shelves) {
-  const count = shelves.reduce((sum, [, items]) => sum + items.length, 0);
+/* Small things that sit on each bookcase's spare shelf. */
+const ORNAMENTS = [
+  `<svg viewBox="0 0 88 88" aria-hidden="true"><path d="M44 58C42 40 30 34 20 34c2 13 11 22 24 24Z" fill="#7f9c6a"/><path d="M44 58c2-20 13-30 26-32-1 16-11 28-26 32Z" fill="#6a8a58"/><path d="M44 58c-5-18-2-34 2-46 7 14 6 32-2 46Z" fill="#8fae78"/><path d="M26 58h36l-4 28H30Z" fill="#c8704a"/><path d="M24 56h40v7H24Z" fill="#b5532d"/></svg>`,
+  `<svg viewBox="0 0 88 88" aria-hidden="true"><rect x="10" y="72" width="66" height="14" rx="2" fill="#8c6a9c"/><rect x="16" y="58" width="56" height="14" rx="2" fill="#d99a4e"/><rect x="12" y="44" width="60" height="14" rx="2" fill="#6f8f9f"/><path d="M34 40c0-9 3-13 7-16-1 7 7 8 7 16Z" fill="#f3e3c9"/><path d="M28 30h32v13a6 6 0 0 1-6 6H34a6 6 0 0 1-6-6Z" transform="translate(0 -6)" fill="#fffaf1"/><path d="M60 28c9 0 9 12 0 12" fill="none" stroke="#fffaf1" stroke-width="4"/></svg>`,
+  `<svg viewBox="0 0 88 88" aria-hidden="true"><circle cx="44" cy="28" r="32" fill="#ffd98a" opacity=".35"/><path d="M28 10h32l10 28H18Z" fill="#f2b84b"/><rect x="41" y="38" width="6" height="40" fill="#8f5f35"/><rect x="26" y="78" width="36" height="8" rx="3" fill="#8f5f35"/></svg>`,
+];
+
+function bayElement(name, shelves, index) {
+  const spare = el('div', { className: 'spare' });
+  const ornament = el('span', { className: 'ornament' });
+  ornament.innerHTML = ORNAMENTS[index % ORNAMENTS.length];
+  spare.append(ornament);
   return el('section', { className: 'bay' },
     el('header', { className: 'sign' },
       el('h2', { textContent: 'Video Games' }),
       el('span', { textContent: name })),
     el('div', { className: 'rack' },
       ...shelves.flatMap(([shelf, items]) => items.map((game, i) => caseButton(game, i === 0 ? shelf : null)))),
-    el('div', { className: `spare${count ? '' : ' empty-bay'}` }));
+    spare);
 }
 
 function render() {
@@ -300,7 +310,7 @@ function render() {
     library.append(el('div', { className: 'empty' }, el('h2', { textContent: 'No games match that search' })));
   } else {
     const bays = wallBays(list, view, !query && view === 'platform');
-    library.append(el('div', { className: 'wall' }, ...bays.map(([name, shelves]) => bayElement(name, shelves))));
+    library.append(el('div', { className: 'wall' }, ...bays.map(([name, shelves], i) => bayElement(name, shelves, i))));
   }
   $('addBtn').hidden = publicView;
   for (const id of ['backupBtn', 'restoreBtn']) $(id).hidden = publicView;
