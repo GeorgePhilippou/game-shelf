@@ -45,7 +45,6 @@ async function tx(mode, work) {
 }
 const dbAll = () => tx('readonly', s => s.getAll());
 const dbPut = game => tx('readwrite', s => s.put(game));
-const dbDelete = id => tx('readwrite', s => s.delete(id));
 
 const store = {
   get(key) { try { return localStorage.getItem(key); } catch { return null; } },
@@ -122,9 +121,11 @@ function coverUrl(blob) {
   if (!coverUrls.has(blob)) coverUrls.set(blob, URL.createObjectURL(blob));
   return coverUrls.get(blob);
 }
+const coverSrc = game => (game.cover ? coverUrl(game.cover) : game.coverPath || null);
 
 /* ---------- Shelf ---------- */
 let games = [];
+let publicView = false;  // a visitor looking at the published shelf, so nothing is editable
 
 function brandColour(platform = '') {
   const p = platform.toLowerCase();
@@ -156,8 +157,8 @@ function caseButton(game) {
   button.setAttribute('aria-label', [game.title, ...details].filter(Boolean).join(', '));
   button.style.setProperty('--brand', brandColour(game.platform));
   button.append(el('span', { className: 'banner', textContent: game.platform || 'Game' }));
-  if (game.cover) {
-    const src = coverUrl(game.cover);
+  const src = coverSrc(game);
+  if (src) {
     button.append(el('img', { src, alt: '', className: 'fill', loading: 'lazy' }), el('img', { src, alt: '', loading: 'lazy' }));
   } else {
     button.append(blankCover(game.title));
@@ -213,6 +214,9 @@ function render() {
       el('div', { className: 'section-head' }, el('h2', { textContent: name }), el('span', { textContent: items.length })),
       el('div', { className: 'shelf' }, ...items.map(caseButton)));
   }
+  $('addBtn').hidden = publicView;
+  for (const id of ['backupBtn', 'restoreBtn']) $(id).hidden = publicView;
+  $('connectBtn').textContent = isConnected() ? 'GitHub sync settings' : 'Connect to GitHub';
   renderBackupNote();
 }
 
@@ -273,7 +277,11 @@ function fillForm() {
   $('fNotes').value = draft.notes;
   $('formError').hidden = true;
   confirmingDelete = false;
-  $('deleteBtn').hidden = draft.isNew;
+  $('deleteBtn').hidden = draft.isNew || publicView;
+  $('saveBtn').hidden = publicView;
+  $('findCover').hidden = publicView;
+  $('uploadCover').hidden = publicView;
+  for (const id of ['fTitle', 'fPlatform', 'fYear', 'fStatus', 'fFormat', 'fFinished', 'fNotes']) $(id).disabled = publicView;
   $('deleteBtn').textContent = 'Remove from shelf';
   renderStars();
   renderCover();
@@ -292,12 +300,13 @@ function readForm() {
 function renderCover() {
   const preview = $('coverPreview');
   const save = $('saveCover');
-  preview.replaceChildren(draft.cover
-    ? el('img', { src: coverUrl(draft.cover), alt: `Cover of ${draft.title}` })
+  const src = coverSrc(draft);
+  preview.replaceChildren(src
+    ? el('img', { src, alt: `Cover of ${draft.title}` })
     : blankCover(draft.title || 'No cover yet'));
-  save.hidden = !draft.cover;
-  if (draft.cover) {
-    save.href = coverUrl(draft.cover);
+  save.hidden = !src;
+  if (src) {
+    save.href = src;
     save.download = `${(draft.title || 'cover').replace(/[^\w -]+/g, '').trim() || 'cover'}.jpg`;
   }
   const source = $('sourceLink');
@@ -308,7 +317,7 @@ function renderCover() {
 function renderStars() {
   const box = $('stars');
   box.replaceChildren(...[1, 2, 3, 4, 5].map(n => {
-    const star = el('button', { type: 'button', className: `star${n <= draft.rating ? ' on' : ''}`, textContent: '★' });
+    const star = el('button', { type: 'button', className: `star${n <= draft.rating ? ' on' : ''}`, textContent: '★', disabled: publicView });
     star.setAttribute('aria-label', `${n} out of 5`);
     star.setAttribute('aria-pressed', String(n === draft.rating));
     star.addEventListener('click', () => {
@@ -354,6 +363,7 @@ async function chooseResult(item) {
   $('searchStatus').textContent = `Downloading the cover of ${item.title}`;
   try {
     draft.cover = await downloadCover(item.image);
+    draft.coverPath = null;
     draft.sourcePage = item.pageTitle;
   } catch (err) {
     console.error(err);
@@ -378,6 +388,7 @@ async function saveDraft(event) {
   readForm();
   if (!draft.title) return;
   const { isNew, ...game } = draft;
+  game.updated = Date.now();
   try {
     await dbPut(game);
   } catch (err) {
@@ -393,6 +404,7 @@ async function saveDraft(event) {
   store.set('unsaved', String(Number(store.get('unsaved') || 0) + 1));
   $('editor').close();
   render();
+  scheduleSync();
   toast(isNew ? `${game.title} is on the shelf` : `${game.title} updated`);
 }
 
@@ -403,11 +415,12 @@ async function deleteDraft() {
     return;
   }
   const { id, title } = draft;
-  await dbDelete(id);
+  await dbPut({ id, deleted: true, updated: Date.now() });
   games = games.filter(g => g.id !== id);
   store.set('unsaved', String(Number(store.get('unsaved') || 0) + 1));
   $('editor').close();
   render();
+  scheduleSync();
   toast(`${title} removed`);
 }
 
@@ -451,21 +464,86 @@ async function restoreBackup(file) {
     if (!entry.id || !entry.title) continue;
     const isImage = typeof entry.cover === 'string' && entry.cover.startsWith('data:image/');
     const cover = isImage ? await (await fetch(entry.cover)).blob() : null;
-    const game = { ...entry, cover };
+    const game = { ...entry, cover, coverPath: null, updated: Date.now() };
     await dbPut(game);
     games = games.filter(g => g.id !== game.id).concat(game);
     restored += 1;
   }
   render();
+  scheduleSync(500);
   toast(`Restored ${plural(restored, 'game')}`);
 }
 
 function renderBackupNote() {
   const last = store.get('lastBackup');
   const changes = Number(store.get('unsaved') || 0);
-  $('backupNote').textContent = !games.length ? ''
+  $('backupNote').textContent = !games.length || publicView || isConnected() ? ''
     : last ? `Last backup ${last}${changes ? `, ${plural(changes, 'change')} since` : ''}`
     : 'Not backed up yet';
+}
+
+/* ---------- Sync screen ---------- */
+function setSyncNote(text) { $('syncNote').textContent = text; }
+
+async function reloadGames() {
+  games = (await dbAll()).filter(g => !g.deleted);
+  render();
+}
+
+function openSyncDialog() {
+  const connected = isConnected();
+  $('syncIntro').hidden = connected;
+  $('syncForm').hidden = connected;
+  $('syncConnected').hidden = !connected;
+  $('syncError').hidden = true;
+  $('tokenInput').value = '';
+  $('syncDialog').showModal();
+}
+
+async function connect(event) {
+  event.preventDefault();
+  const token = $('tokenInput').value.trim();
+  const error = $('syncError');
+  error.hidden = true;
+  try {
+    const repo = await githubJson('', { token });
+    if (!repo.permissions?.push) throw new Error('read-only token');
+    store.set(TOKEN_KEY, token);
+    if (!isConnected()) throw new Error('browser storage blocked');
+  } catch (err) {
+    console.error(err.message);
+    error.textContent = err.message === 'browser storage blocked'
+      ? 'This browser would not save the token. Try a normal, non-private window.'
+      : 'That token did not work. Check it is for game-shelf with Contents set to Read and write.';
+    error.hidden = false;
+    return;
+  }
+  $('syncDialog').close();
+  publicView = false;
+  await reloadGames();
+  await syncNow();
+  toast('This device is connected');
+}
+
+function disconnect() {
+  try { localStorage.removeItem(TOKEN_KEY); } catch { /* nothing stored */ }
+  location.reload();
+}
+
+/* Visitors see the published library; with no published games, the page works locally. */
+async function loadPublished() {
+  try {
+    const res = await fetch(LIBRARY_PATH, { cache: 'no-cache' });
+    if (!res.ok) return false;
+    const published = (await res.json()).games.filter(g => !g.deleted);
+    if (!published.length) return false;
+    games = published;
+    publicView = true;
+    return true;
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
 }
 
 /* ---------- Wiring ---------- */
@@ -510,6 +588,7 @@ async function start() {
     if (!file) return;
     try {
       draft.cover = await toCoverBlob(file);
+      draft.coverPath = null;
       draft.sourcePage = '';
       renderCover();
     } catch (err) {
@@ -527,14 +606,26 @@ async function start() {
     if (file) restoreBackup(file);
   });
 
-  try {
-    games = await dbAll();
-  } catch (err) {
-    console.error(err);
-    toast('This browser is blocking storage, so games cannot be saved here');
+  $('tokenLink').href = TOKEN_PAGE;
+  $('connectBtn').addEventListener('click', openSyncDialog);
+  $('closeSync').addEventListener('click', () => $('syncDialog').close());
+  $('syncForm').addEventListener('submit', connect);
+  $('syncNowBtn').addEventListener('click', () => { $('syncDialog').close(); syncNow(); });
+  $('disconnectBtn').addEventListener('click', disconnect);
+
+  if (isConnected() || !(await loadPublished())) {
+    try {
+      await reloadGames();
+    } catch (err) {
+      console.error(err);
+      toast('This browser is blocking storage, so games cannot be saved here');
+    }
   }
   render();
-  navigator.storage?.persist?.();
+  if (isConnected()) {
+    syncNow();
+    navigator.storage?.persist?.();
+  }
 }
 
 start();
