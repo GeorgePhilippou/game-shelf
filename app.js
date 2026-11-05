@@ -158,11 +158,11 @@ let publicView = false;  // a visitor looking at the published shelf, so nothing
 
 function brandColour(platform = '') {
   const p = platform.toLowerCase();
-  if (/ps\d|playstation|psp|vita/.test(p)) return '#4a8fe0';
-  if (/xbox/.test(p)) return '#4fae55';
-  if (/switch|wii|gamecube|n64|nintendo|\bds\b|3ds|game boy|snes|nes/.test(p)) return '#e4574f';
-  if (/pc|steam|windows/.test(p)) return '#8fa3b5';
-  if (/mac|ios|iphone|ipad|mobile|android/.test(p)) return '#8f6fc0';
+  if (/ps\d|playstation|psp|vita/.test(p)) return '#2f6fd0';
+  if (/xbox/.test(p)) return '#2e9440';
+  if (/switch|wii|gamecube|n64|nintendo|\bds\b|3ds|game boy|snes|nes/.test(p)) return '#d6352c';
+  if (/pc|steam|windows/.test(p)) return '#5a6b7b';
+  if (/mac|ios|iphone|ipad|mobile|android/.test(p)) return '#7a54b5';
   return '#8a7a6c';
 }
 
@@ -189,6 +189,7 @@ function fitCover(button, ratio) {
   }
   button.style.setProperty('--fw', width.toFixed(3));
   button.style.setProperty('--fh', height.toFixed(3));
+  button.style.setProperty('--ratio', ratio.toFixed(4));
 }
 
 function caseButton(game) {
@@ -250,9 +251,11 @@ function render() {
   const finished = games.filter(g => g.status === 'finished').length;
   const physical = games.filter(g => g.format === 'physical').length;
   const platforms = new Set(games.map(g => g.platform).filter(Boolean)).size;
-  $('stats').textContent = games.length
-    ? `${plural(games.length, 'game')}  ·  ${finished} finished  ·  ${physical} physical  ·  ${plural(platforms, 'platform')}`
-    : 'Every game you own, play and have played';
+  const stat = (count, word) => el('span', {}, el('b', { textContent: count }), ` ${word}`);
+  $('stats').replaceChildren(...(games.length
+    ? [stat(games.length, games.length === 1 ? 'game' : 'games'), stat(finished, 'finished'), stat(physical, 'physical'),
+      stat(platforms, platforms === 1 ? 'platform' : 'platforms')]
+    : [el('span', { textContent: 'Every game you own, play and have played' })]));
 
   const library = $('library');
   library.replaceChildren();
