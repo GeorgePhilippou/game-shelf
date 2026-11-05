@@ -13,7 +13,7 @@ const TOKEN_PAGE = 'https://github.com/settings/personal-access-tokens/new?' + n
   name: 'Game Shelf',
   description: 'Lets Game Shelf save to the game-shelf repo',
   target_name: REPO.owner,
-  expires_in: '366',
+  expires_in: '365',
   contents: 'write',
 });
 
