@@ -5,19 +5,21 @@
   {
    "added": 1793916581437,
    "coverPath": "covers/c02e7d8d-d7b7-4084-b458-16b9c10fb837-upright-mw44yt4q.jpg",
+   "coverUpright": true,
    "finished": "2026-09-01",
    "format": "digital",
+   "genre": "Point & Click",
+   "genreChecked": true,
    "id": "c02e7d8d-d7b7-4084-b458-16b9c10fb837",
    "notes": "",
    "platform": "iPad",
    "rating": 0,
    "sourcePage": "Servant of the Lake",
    "status": "finished",
+   "steamId": "3636770",
    "title": "Servant of the Lake",
-   "updated": 1793918852090,
-   "year": 2026,
-   "coverUpright": true,
-   "steamId": "3636770"
+   "updated": 1793919209968,
+   "year": 2026
   }
  ]
 }
