@@ -129,12 +129,12 @@ let publicView = false;  // a visitor looking at the published shelf, so nothing
 
 function brandColour(platform = '') {
   const p = platform.toLowerCase();
-  if (/ps\d|playstation|psp|vita/.test(p)) return '#1f5fb4';
-  if (/xbox/.test(p)) return '#2c7d32';
-  if (/switch|wii|gamecube|n64|nintendo|\bds\b|3ds|game boy|snes|nes/.test(p)) return '#c5302b';
-  if (/pc|steam|windows/.test(p)) return '#3d4a57';
-  if (/mac|ios|iphone|ipad|mobile|android/.test(p)) return '#6a5a7d';
-  return '#5c5048';
+  if (/ps\d|playstation|psp|vita/.test(p)) return '#4a8fe0';
+  if (/xbox/.test(p)) return '#4fae55';
+  if (/switch|wii|gamecube|n64|nintendo|\bds\b|3ds|game boy|snes|nes/.test(p)) return '#e4574f';
+  if (/pc|steam|windows/.test(p)) return '#8fa3b5';
+  if (/mac|ios|iphone|ipad|mobile|android/.test(p)) return '#8f6fc0';
+  return '#8a7a6c';
 }
 
 function el(tag, props = {}, ...children) {
@@ -147,23 +147,52 @@ function blankCover(title) {
   return el('div', { className: 'blank', textContent: title });
 }
 
+/* Covers come in every shape, so each keeps its true proportions at a similar visual size. */
+const CASE_RATIO = 5 / 7;
+const coverRatios = new Map();
+
+function fitCover(button, ratio) {
+  let width = Math.min(Math.sqrt(ratio / CASE_RATIO), 1.7);
+  let height = width * CASE_RATIO / ratio;
+  if (height > 1.1) {
+    height = 1.1;
+    width = height * ratio / CASE_RATIO;
+  }
+  button.style.setProperty('--fw', width.toFixed(3));
+  button.style.setProperty('--fh', height.toFixed(3));
+}
+
 function caseButton(game) {
   const button = el('button', {
     type: 'button',
-    className: `case${game.format === 'former' ? ' gone' : ''}`,
+    className: `game${game.format === 'former' ? ' gone' : ''}`,
     title: game.title,
   });
-  const details = [game.platform, label(STATUSES, game.status), game.rating ? `${game.rating} out of 5` : ''];
+  const status = label(STATUSES, game.status);
+  const details = [game.platform, status, game.rating ? `${game.rating} out of 5` : ''];
   button.setAttribute('aria-label', [game.title, ...details].filter(Boolean).join(', '));
   button.style.setProperty('--brand', brandColour(game.platform));
-  button.append(el('span', { className: 'banner', textContent: game.platform || 'Game' }));
+
   const src = coverSrc(game);
+  fitCover(button, coverRatios.get(src) || CASE_RATIO);
+  const frame = el('span', { className: 'frame' });
   if (src) {
-    button.append(el('img', { src, alt: '', className: 'fill', loading: 'lazy' }), el('img', { src, alt: '', loading: 'lazy' }));
+    const image = el('img', { src, alt: '' });
+    image.addEventListener('load', () => {
+      const ratio = image.naturalWidth / image.naturalHeight;
+      coverRatios.set(src, ratio);
+      fitCover(button, ratio);
+    });
+    frame.append(image);
   } else {
-    button.append(blankCover(game.title));
+    frame.append(blankCover(game.title));
   }
-  if (game.rating) button.append(el('span', { className: 'score', textContent: `★ ${game.rating}` }));
+
+  const meta = el('small', {}, el('i', { className: 'dot' }), game.platform || status);
+  if (game.rating) meta.append(el('span', { className: 'score', textContent: ` ★ ${game.rating}` }));
+  button.append(
+    el('span', { className: 'stand' }, frame),
+    el('span', { className: 'caption' }, el('b', { textContent: game.title }), meta));
   button.addEventListener('click', () => openEditor(game));
   return button;
 }
@@ -193,8 +222,8 @@ function render() {
   const physical = games.filter(g => g.format === 'physical').length;
   const platforms = new Set(games.map(g => g.platform).filter(Boolean)).size;
   $('stats').textContent = games.length
-    ? `${plural(games.length, 'game')} · ${finished} finished · ${physical} physical · ${plural(platforms, 'platform')}`
-    : 'Your shelf is ready';
+    ? `${plural(games.length, 'game')}  ·  ${finished} finished  ·  ${physical} physical  ·  ${plural(platforms, 'platform')}`
+    : 'Every game you own, play and have played';
 
   const library = $('library');
   library.replaceChildren();
