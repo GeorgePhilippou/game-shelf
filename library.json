@@ -25,6 +25,7 @@
   {
    "added": 1793961898927,
    "coverCustom": false,
+   "coverLookup": 1,
    "coverPath": "covers/7472762b-5033-40e2-bf14-77f0615d92a6-mw4um4ot.jpg",
    "coverUpright": false,
    "finished": "",
@@ -39,8 +40,7 @@
    "status": "finished",
    "title": "Jurassic Park: Operation Genesis",
    "updated": 1793961924056,
-   "year": 2003,
-   "coverLookup": 1
+   "year": 2003
   },
   {
    "added": 1793961809834,
@@ -80,6 +80,25 @@
    "title": "Servant of the Lake",
    "updated": 1793961929934,
    "year": 2026
+  },
+  {
+   "added": 1793962249305,
+   "coverCustom": false,
+   "coverPath": "covers/d0b5b4fe-deeb-458e-a54d-60fa1c7a9dbb-mw4utg4e.jpg",
+   "coverUpright": false,
+   "finished": "",
+   "format": "digital",
+   "genre": "Sandbox & Survival",
+   "genreChecked": true,
+   "id": "d0b5b4fe-deeb-458e-a54d-60fa1c7a9dbb",
+   "notes": "",
+   "platform": "iPad",
+   "rating": 5,
+   "sourcePage": "Minecraft",
+   "status": "finished",
+   "title": "Minecraft",
+   "updated": 1793962265914,
+   "year": null
   }
  ]
 }
