@@ -283,6 +283,9 @@ function groupGames(list, keyOf) {
 const genreOf = game => game.genre || 'Other';
 const familyNameOf = game => familyOf(game.platform)[0];
 
+/* Bookcases that stay off the wall until a game of theirs is added. */
+const ONLY_WITH_GAMES = new Set(['Xbox', 'Nintendo', OTHER_FAMILY[0]]);
+
 /* The wall: one bay per main category, one run of shelves per subcategory inside it. */
 function wallBays(list, view, showEmpty) {
   const [bayKey, shelfKey, names] = {
@@ -293,7 +296,7 @@ function wallBays(list, view, showEmpty) {
   }[view];
   const bays = groupGames(list, bayKey);
   return names
-    .filter(name => bays.has(name) || (showEmpty && name !== OTHER_FAMILY[0]))
+    .filter(name => bays.has(name) || (showEmpty && !ONLY_WITH_GAMES.has(name)))
     .map(name => [name, [...groupGames(bays.get(name) || [], shelfKey)].sort(([a], [b]) => a.localeCompare(b))]);
 }
 
