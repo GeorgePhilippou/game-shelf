@@ -3,6 +3,27 @@
  "version": 2,
  "games": [
   {
+   "added": 1793963564457,
+   "coverCustom": false,
+   "coverPath": "covers/1593a94c-59bd-4f95-87be-b7cb33efa333-mw4vlipe.jpg",
+   "coverUpright": true,
+   "finished": "",
+   "format": "digital",
+   "genre": "Adventure",
+   "genreChecked": true,
+   "id": "1593a94c-59bd-4f95-87be-b7cb33efa333",
+   "notes": "",
+   "platform": "Mac",
+   "rating": 5,
+   "sourcePage": null,
+   "status": "finished",
+   "steamId": "2120900",
+   "title": "Fears to Fathom - Carson House",
+   "updated": 1793963575539,
+   "wikidataId": "Q122300553",
+   "year": 2023
+  },
+  {
    "added": 1793961868234,
    "coverCustom": false,
    "coverPath": "covers/42e558b8-c828-4763-96b9-3c129ca7d520-mw4ulhq7.jpg",
