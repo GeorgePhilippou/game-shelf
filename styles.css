@@ -107,7 +107,7 @@ button { cursor: pointer; }
     var(--oak-dark) calc(var(--pitch) - 4px), var(--oak-dark) var(--pitch));
   background-size: 100% var(--pitch);
 }
-.rack { display: flex; flex-wrap: wrap; gap: 0 var(--case-gap); padding: 0 15px; }
+.rack { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 var(--case-gap); padding: 0 15px; }
 .spare { position: relative; flex: 1 0 var(--pitch); }
 .ornament { position: absolute; right: 26px; top: calc(var(--pitch) - var(--ledge) - 88px); width: 88px; height: 88px; }
 /* Not always in the same corner, so the wall doesn't read as a pattern. */
