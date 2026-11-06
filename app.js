@@ -188,10 +188,11 @@ function blankCover(title) {
   return el('div', { className: 'blank', textContent: title });
 }
 
-/* Every game stands as an upright case. Art that isn't upright sits on a sleeve in its own colour. */
-const UPRIGHT = [0.6, 0.86];
+/* Every game stands as an upright case. Nothing is cropped: art of any other shape sits inside
+   the cover on a background of its own colour. */
+const WIDE = 0.86;
 
-/* Logos arrive on plain white, which reads as a harsh strip on a coloured sleeve. */
+/* Logos arrive on plain white, which reads as a harsh strip on a coloured background. */
 function onWhite(image) {
   try {
     const canvas = document.createElement('canvas');
@@ -228,12 +229,12 @@ function caseArt(game) {
   }
   const image = coverImage(game, '');
   image.addEventListener('load', () => {
-    const ratio = image.naturalWidth / image.naturalHeight;
-    if (ratio >= UPRIGHT[0] && ratio <= UPRIGHT[1]) return;
-    art.classList.add('sleeve');
-    if (onWhite(image)) art.classList.add('paper');
-    else art.style.setProperty('--tone', averageColour(image));
-    art.append(el('span', { className: 'sleeve-title', textContent: game.title }));
+    if (image.naturalWidth / image.naturalHeight > WIDE && onWhite(image)) {
+      art.classList.add('paper');
+      art.append(el('span', { className: 'paper-title', textContent: game.title }));
+    } else {
+      art.style.setProperty('--tone', averageColour(image));
+    }
   });
   art.append(image);
   return art;

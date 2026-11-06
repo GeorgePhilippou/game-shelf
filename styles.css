@@ -14,7 +14,8 @@
   --back: #f3e3c9;
   --display: Fraunces, Georgia, "Times New Roman", serif;
   --case-w: 104px;
-  --case-h: 146px;
+  --band: 14px;
+  --case-h: calc(var(--case-w) * 1.5 + var(--band)); /* store art is 2:3, so it fills the cover exactly */
   --case-gap: 13px;
   --air: 30px;
   --ledge: 27px;
@@ -147,23 +148,21 @@ button { cursor: pointer; }
               linear-gradient(120deg, rgba(255, 245, 225, .12), transparent 34%);
 }
 .band {
-  position: absolute; inset: 0 0 auto 0; z-index: 1; height: 14px;
-  padding: 0 4px 0 8px; font-size: 9.5px; line-height: 14px; font-weight: 800; color: #fffaf1;
+  position: absolute; inset: 0 0 auto 0; z-index: 1; height: var(--band);
+  padding: 0 4px 0 8px; font-size: 9.5px; line-height: var(--band); font-weight: 800; color: #fffaf1;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   background: var(--brand, #7a6a58);
 }
-.art { position: absolute; inset: 14px 0 0 0; display: block; background: #4a3626; }
-.art img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.art.sleeve { display: flex; flex-direction: column; justify-content: center; gap: 7px; background: var(--tone, #4a3626); }
-.art.sleeve img { height: auto; flex: none; }
-.art.sleeve.paper { background: #fbf1df; }
-.art.sleeve.paper img { mix-blend-mode: multiply; padding: 0 8px; }
-.sleeve-title {
+.art { position: absolute; inset: var(--band) 0 0 0; display: block; background: var(--tone, #4a3626); }
+.art img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.art.paper { display: flex; flex-direction: column; justify-content: center; gap: 7px; background: #fbf1df; }
+.art.paper img { height: auto; flex: none; mix-blend-mode: multiply; padding: 0 8px; }
+.paper-title {
   padding: 0 8px 0 10px; color: #fffaf1; font-size: 11.5px; line-height: 1.2; font-weight: 800; text-align: center;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
 }
-.paper .sleeve-title { color: var(--ink); text-shadow: none; }
+.paper .paper-title { color: var(--ink); text-shadow: none; }
 .blank {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 10px 8px 10px 11px; text-align: center; color: #fffaf1;
@@ -211,8 +210,8 @@ dialog::backdrop { background: rgba(70, 45, 25, .42); }
   background: transparent; border: 1.5px solid transparent; border-radius: 12px;
 }
 .result:hover, .result:focus-visible { background: var(--back); }
-.result img { width: 100%; aspect-ratio: 5 / 7; object-fit: contain; object-position: bottom; border-radius: 4px; }
-.result-blank { display: grid; place-items: center; width: 100%; aspect-ratio: 5 / 7; border-radius: 4px; background: var(--back); color: var(--muted); font-size: 13px; font-weight: 700; }
+.result img { width: 100%; aspect-ratio: 2 / 3; object-fit: contain; object-position: bottom; border-radius: 4px; }
+.result-blank { display: grid; place-items: center; width: 100%; aspect-ratio: 2 / 3; border-radius: 4px; background: var(--back); color: var(--muted); font-size: 13px; font-weight: 700; }
 .result b { font-size: 14px; font-weight: 800; line-height: 1.25; }
 .result small { color: var(--muted); font-size: 13px; }
 
@@ -220,7 +219,7 @@ dialog::backdrop { background: rgba(70, 45, 25, .42); }
 .cover-col { display: grid; gap: 8px; align-content: start; }
 .cover-preview { position: relative; overflow: hidden; border-radius: 6px; background: var(--back); align-self: start; }
 .cover-preview img { width: 100%; height: auto; display: block; }
-.cover-preview .blank { position: relative; inset: auto; aspect-ratio: 5 / 7; font-size: 17px; }
+.cover-preview .blank { position: relative; inset: auto; aspect-ratio: 2 / 3; font-size: 17px; }
 .field-col { display: grid; gap: 12px; min-width: 0; }
 .field-col label, .stars-field legend { display: grid; gap: 4px; font-size: 14px; font-weight: 700; color: var(--muted); }
 .field-col input, .field-col select, .field-col textarea { width: 100%; min-width: 0; font-size: 16px; font-weight: 500; }
@@ -251,7 +250,7 @@ dialog::backdrop { background: rgba(70, 45, 25, .42); }
 }
 
 @media (max-width: 680px) {
-  :root { --case-w: 94px; --case-h: 132px; --case-gap: 9px; --air: 28px; }
+  :root { --case-w: 94px; --case-gap: 9px; --air: 28px; }
   .top { padding: 8px 16px 16px; }
   .brand h1 { font-size: 44px; }
   #library { padding: 0 10px 26px; }
