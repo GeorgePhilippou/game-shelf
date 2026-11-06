@@ -3,6 +3,26 @@
  "version": 2,
  "games": [
   {
+   "added": 1793961868234,
+   "coverCustom": false,
+   "coverPath": "covers/42e558b8-c828-4763-96b9-3c129ca7d520-mw4ulhq7.jpg",
+   "coverUpright": true,
+   "finished": "",
+   "format": "digital",
+   "genre": "Action Adventure",
+   "genreChecked": true,
+   "id": "42e558b8-c828-4763-96b9-3c129ca7d520",
+   "notes": "",
+   "platform": "iPad",
+   "rating": 5,
+   "sourcePage": "Subnautica",
+   "status": "finished",
+   "steamId": "264710",
+   "title": "Subnautica",
+   "updated": 1793961894411,
+   "year": 2018
+  },
+  {
    "added": 1793961809834,
    "coverCustom": false,
    "coverPath": "covers/8d519bb2-5193-462c-8c4e-fc4ceb93b545-mw4uksjs.jpg",
