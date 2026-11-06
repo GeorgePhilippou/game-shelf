@@ -3,6 +3,26 @@
  "version": 2,
  "games": [
   {
+   "added": 1793961809834,
+   "coverCustom": false,
+   "coverPath": "covers/8d519bb2-5193-462c-8c4e-fc4ceb93b545-mw4uksjs.jpg",
+   "coverUpright": true,
+   "finished": "",
+   "format": "digital",
+   "genre": "Shooter",
+   "genreChecked": true,
+   "id": "8d519bb2-5193-462c-8c4e-fc4ceb93b545",
+   "notes": "First game I played.",
+   "platform": "Mac",
+   "rating": 5,
+   "sourcePage": "Return to Castle Wolfenstein",
+   "status": "finished",
+   "steamId": "9010",
+   "title": "Return to Castle Wolfenstein",
+   "updated": 1793961861667,
+   "year": 2001
+  },
+  {
    "added": 1793916581437,
    "coverPath": "covers/c02e7d8d-d7b7-4084-b458-16b9c10fb837-upright-mw44yt4q.jpg",
    "coverUpright": true,
