@@ -63,6 +63,27 @@
    "year": 2001
   },
   {
+   "added": 1793963140972,
+   "coverCustom": false,
+   "coverPath": "covers/9019493e-c6d2-45cd-805a-d65f4745f53d-mw4vckbs.jpg",
+   "coverUpright": true,
+   "finished": "",
+   "format": "digital",
+   "genre": "Adventure",
+   "genreChecked": true,
+   "id": "9019493e-c6d2-45cd-805a-d65f4745f53d",
+   "notes": "",
+   "platform": "Mac",
+   "rating": 5,
+   "sourcePage": null,
+   "status": "finished",
+   "steamId": "2506160",
+   "title": "Fears to Fathom - Ironbark Lookout",
+   "updated": 1793963157669,
+   "wikidataId": "Q123404178",
+   "year": 2023
+  },
+  {
    "added": 1793916581437,
    "coverPath": "covers/c02e7d8d-d7b7-4084-b458-16b9c10fb837-upright-mw44yt4q.jpg",
    "coverUpright": true,
@@ -84,6 +105,7 @@
   {
    "added": 1793962249305,
    "coverCustom": false,
+   "coverLookup": 1,
    "coverPath": "covers/d0b5b4fe-deeb-458e-a54d-60fa1c7a9dbb-mw4utg4e.jpg",
    "coverUpright": false,
    "finished": "",
@@ -98,8 +120,7 @@
    "status": "finished",
    "title": "Minecraft",
    "updated": 1793962265914,
-   "year": null,
-   "coverLookup": 1
+   "year": null
   }
  ]
 }
