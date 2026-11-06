@@ -109,7 +109,10 @@ button { cursor: pointer; }
 .rack { display: flex; flex-wrap: wrap; gap: 0 var(--case-gap); padding: 0 15px; }
 .spare { position: relative; flex: 1 0 var(--pitch); }
 .ornament { position: absolute; right: 26px; top: calc(var(--pitch) - var(--ledge) - 88px); width: 88px; height: 88px; }
-.ornament svg { display: block; width: 100%; height: 100%; }
+/* Not always in the same corner, so the wall doesn't read as a pattern. */
+.bay:nth-child(3n+2) .ornament { right: auto; left: 26px; }
+.bay:nth-child(3n) .ornament { right: calc(50% - 44px); }
+.ornament svg { display: block; width: 100%; height: 100%; overflow: visible; }
 
 .game {
   display: flex; flex-direction: column; justify-content: flex-start; flex: none; position: relative;

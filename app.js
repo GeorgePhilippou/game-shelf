@@ -267,13 +267,6 @@ function wallBays(list, view, showEmpty) {
     .map(name => [name, [...groupGames(bays.get(name) || [], shelfKey)].sort(([a], [b]) => a.localeCompare(b))]);
 }
 
-/* Small things that sit on each bookcase's spare shelf. */
-const ORNAMENTS = [
-  `<svg viewBox="0 0 88 88" aria-hidden="true"><path d="M44 58C42 40 30 34 20 34c2 13 11 22 24 24Z" fill="#7f9c6a"/><path d="M44 58c2-20 13-30 26-32-1 16-11 28-26 32Z" fill="#6a8a58"/><path d="M44 58c-5-18-2-34 2-46 7 14 6 32-2 46Z" fill="#8fae78"/><path d="M26 58h36l-4 28H30Z" fill="#c8704a"/><path d="M24 56h40v7H24Z" fill="#b5532d"/></svg>`,
-  `<svg viewBox="0 0 88 88" aria-hidden="true"><rect x="10" y="72" width="66" height="14" rx="2" fill="#8c6a9c"/><rect x="16" y="58" width="56" height="14" rx="2" fill="#d99a4e"/><rect x="12" y="44" width="60" height="14" rx="2" fill="#6f8f9f"/><path d="M34 40c0-9 3-13 7-16-1 7 7 8 7 16Z" fill="#f3e3c9"/><path d="M28 30h32v13a6 6 0 0 1-6 6H34a6 6 0 0 1-6-6Z" transform="translate(0 -6)" fill="#fffaf1"/><path d="M60 28c9 0 9 12 0 12" fill="none" stroke="#fffaf1" stroke-width="4"/></svg>`,
-  `<svg viewBox="0 0 88 88" aria-hidden="true"><circle cx="44" cy="28" r="32" fill="#ffd98a" opacity=".35"/><path d="M28 10h32l10 28H18Z" fill="#f2b84b"/><rect x="41" y="38" width="6" height="40" fill="#8f5f35"/><rect x="26" y="78" width="36" height="8" rx="3" fill="#8f5f35"/></svg>`,
-];
-
 function bayElement(name, shelves, index) {
   const spare = el('div', { className: 'spare' });
   const ornament = el('span', { className: 'ornament' });
