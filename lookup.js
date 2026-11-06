@@ -15,7 +15,7 @@ const GENRE_RULES = [
   [/fighting|beat 'em up/i, 'Fighting'],
   [/horror/i, 'Horror'],
   [/strategy|tactic|4x|city.building|management|simulation|simulator/i, 'Strategy & Sim'],
-  [/action.adventure|open.world|stealth/i, 'Action Adventure'],
+  [/action.{1,3}adventure|open.world|stealth/i, 'Action Adventure'],
   [/puzzle/i, 'Puzzle'],
   [/adventure|visual novel|interactive fiction/i, 'Adventure'],
   [/action/i, 'Action'],
@@ -35,11 +35,14 @@ async function apiJson(base, params) {
   return res.json();
 }
 
-async function wikidataFacts(pageTitle) {
+async function wikidataId(pageTitle) {
   const wiki = await apiJson('https://en.wikipedia.org/w/api.php', {
     action: 'query', prop: 'pageprops', ppprop: 'wikibase_item', redirects: '1', titles: pageTitle,
   });
-  const id = Object.values(wiki.query?.pages || {})[0]?.pageprops?.wikibase_item;
+  return Object.values(wiki.query?.pages || {})[0]?.pageprops?.wikibase_item || null;
+}
+
+async function wikidataFacts(id) {
   if (!id) return { labels: [], steamId: null };
 
   const WIKIDATA = 'https://www.wikidata.org/w/api.php';
@@ -65,13 +68,13 @@ async function appStoreGenres(title) {
   return (match?.genres || []).filter(g => g !== 'Games');
 }
 
-async function lookupGame({ title, sourcePage }) {
-  const facts = sourcePage ? await wikidataFacts(sourcePage).catch(() => ({ labels: [], steamId: null })) : { labels: [], steamId: null };
-  const genre = shelfGenre(facts.labels) || shelfGenre(await appStoreGenres(title).catch(() => []));
+async function lookupGame({ title, sourcePage, wikidataId: knownId, storeGenres = [] }) {
+  const id = knownId || (sourcePage ? await wikidataId(sourcePage).catch(() => null) : null);
+  const facts = await wikidataFacts(id).catch(() => ({ labels: [], steamId: null }));
+  const genre = shelfGenre(facts.labels) || shelfGenre(storeGenres) || shelfGenre(await appStoreGenres(title).catch(() => []));
   return { genre, steamId: facts.steamId };
 }
 
 /* Steam's portrait library art. Newer games use a hashed path, which the repo's robot resolves. */
-function uprightCover(steamId) {
-  return downloadCover(`https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${steamId}/library_600x900.jpg`);
-}
+const steamArt = steamId => `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${steamId}/library_600x900.jpg`;
+const uprightCover = steamId => downloadCover(steamArt(steamId));

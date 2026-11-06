@@ -110,23 +110,19 @@ async function infoboxImage(pageTitle) {
 async function searchWikipedia(query) {
   const [plain, suffixed] = await Promise.all([wikipediaPages(query), wikipediaPages(`${query} video game`)]);
   const pages = [...new Map([...plain, ...suffixed].map(p => [p.pageid, p])).values()];
-  const games = pages.filter(p => /\bgame\b/i.test(p.description || '')
-    && !NOT_A_GAME.test(p.description || '') && !NOT_A_GAME_TITLE.test(p.title));
-  const wanted = query.toLowerCase();
-  const found = (games.length ? games : pages.filter(p => p.thumbnail?.source))
-    .map(p => ({
-      title: p.title.replace(/\s*\((?:[^)]*\b)?(?:video )?game\)$/i, ''),
-      pageTitle: p.title,
-      year: Number((p.description || '').match(/\b(19|20)\d{2}\b/)?.[0]) || null,
-      description: p.description || '',
-      image: p.thumbnail?.source || null,
-    }))
-    .sort((a, b) => closeness(a.title, wanted) - closeness(b.title, wanted))
-    .slice(0, 15);
-  await Promise.all(found.filter(item => !item.image).map(async item => {
-    item.image = await infoboxImage(item.pageTitle).catch(() => null);
-  }));
-  return found.filter(item => item.image || closeness(item.title, wanted) === 0);
+  const result = p => ({
+    title: p.title.replace(/\s*\((?:[^)]*\b)?(?:video )?game\)$/i, ''),
+    pageTitle: p.title,
+    year: Number((p.description || '').match(/\b(19|20)\d{2}\b/)?.[0]) || null,
+    description: p.description || '',
+    images: p.thumbnail?.source ? [{ url: p.thumbnail.source, upright: false }] : [],
+  });
+  return {
+    games: pages.filter(p => /\bgame\b/i.test(p.description || '')
+      && !NOT_A_GAME.test(p.description || '') && !NOT_A_GAME_TITLE.test(p.title)).map(result),
+    others: pages.filter(p => p.thumbnail?.source).map(result),
+    seriesTitle: pages.find(p => /\bgame series\b/i.test(p.description || ''))?.title || null,
+  };
 }
 
 /* Shrinks any source image to a consistent JPEG so backups stay a sensible size. */
@@ -465,20 +461,33 @@ async function runSearch() {
   }
   status.textContent = 'Looking for covers';
   try {
-    const found = await searchWikipedia(query);
+    const found = await searchGames(query);
     if (run !== searchRun) return;
     status.textContent = found.length ? 'Pick the right game' : 'No covers found. You can add it by hand below.';
     $('results').replaceChildren(...found.map(resultButton));
   } catch (err) {
     if (run !== searchRun) return;
     console.error(err);
-    status.textContent = 'Could not reach Wikipedia. You can still add the game by hand below.';
+    status.textContent = 'Could not search for games. You can still add it by hand below.';
   }
+}
+
+/* A Steam game's upright art can be missing, so each failed image falls to the next one. */
+function resultImage(item) {
+  const blank = () => el('span', { className: 'result-blank', textContent: 'No cover' });
+  if (!item.images.length) return blank();
+  const image = el('img', { src: item.images[0].url, alt: '' });
+  let next = 1;
+  image.addEventListener('error', () => {
+    if (next < item.images.length) image.src = item.images[next++].url;
+    else image.replaceWith(blank());
+  });
+  return image;
 }
 
 function resultButton(item) {
   const button = el('button', { type: 'button', className: 'result' },
-    item.image ? el('img', { src: item.image, alt: '' }) : el('span', { className: 'result-blank', textContent: 'No cover' }),
+    resultImage(item),
     el('b', { textContent: item.title }),
     el('small', { textContent: item.year || item.description }));
   button.addEventListener('click', () => chooseResult(item));
@@ -488,14 +497,16 @@ function resultButton(item) {
 async function chooseResult(item) {
   $('searchStatus').textContent = `Downloading the cover of ${item.title}`;
   try {
-    if (item.image) {
-      draft.cover = await downloadCover(item.image);
-      draft.coverPath = null;
-      draft.coverCustom = false;
-      draft.coverUpright = false;
+    for (const { url, upright } of item.images) {
+      const cover = await downloadCover(url).catch(() => null);
+      if (!cover) continue;
+      Object.assign(draft, { cover, coverPath: null, coverCustom: false, coverUpright: upright });
+      break;
     }
-    draft.sourcePage = item.pageTitle;
-    await addLookups(draft, item.title);
+    draft.sourcePage = item.pageTitle || null;
+    draft.wikidataId = item.wikidataId || null;
+    draft.steamId = item.steamId || null;
+    await addLookups(draft, item.title, item.genres);
   } catch (err) {
     console.error(err);
     $('searchStatus').textContent = 'That cover would not download. Try another, or carry on without it.';
@@ -515,8 +526,8 @@ async function chooseResult(item) {
 }
 
 /* Fills in the genre and, where Steam has it, swaps in upright box art. */
-async function addLookups(game, title = game.title) {
-  const { genre, steamId } = await lookupGame({ title, sourcePage: game.sourcePage });
+async function addLookups(game, title = game.title, storeGenres = []) {
+  const { genre, steamId } = await lookupGame({ title, sourcePage: game.sourcePage, wikidataId: game.wikidataId, storeGenres });
   game.genreChecked = true;
   if (genre && !game.genre) game.genre = genre;
   if (!steamId) return;
