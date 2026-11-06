@@ -156,11 +156,14 @@ button { cursor: pointer; }
 .art img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .art.sleeve { display: flex; flex-direction: column; justify-content: center; gap: 7px; background: var(--tone, #4a3626); }
 .art.sleeve img { height: auto; flex: none; }
+.art.sleeve.paper { background: #fbf1df; }
+.art.sleeve.paper img { mix-blend-mode: multiply; padding: 0 8px; }
 .sleeve-title {
   padding: 0 8px 0 10px; color: #fffaf1; font-size: 11.5px; line-height: 1.2; font-weight: 800; text-align: center;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
 }
+.paper .sleeve-title { color: var(--ink); text-shadow: none; }
 .blank {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 10px 8px 10px 11px; text-align: center; color: #fffaf1;
@@ -209,6 +212,7 @@ dialog::backdrop { background: rgba(70, 45, 25, .42); }
 }
 .result:hover, .result:focus-visible { background: var(--back); }
 .result img { width: 100%; aspect-ratio: 5 / 7; object-fit: contain; object-position: bottom; border-radius: 4px; }
+.result-blank { display: grid; place-items: center; width: 100%; aspect-ratio: 5 / 7; border-radius: 4px; background: var(--back); color: var(--muted); font-size: 13px; font-weight: 700; }
 .result b { font-size: 14px; font-weight: 800; line-height: 1.25; }
 .result small { color: var(--muted); font-size: 13px; }
 

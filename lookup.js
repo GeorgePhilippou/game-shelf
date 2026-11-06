@@ -5,6 +5,8 @@
 const GENRE_RULES = [
   [/point.and.click|graphic adventure/i, 'Point & Click'],
   [/roguelike|roguelite/i, 'Roguelike'],
+  [/battle royale/i, 'Shooter'],
+  [/sandbox|survival game/i, 'Sandbox & Survival'],
   [/role.?playing|\brpg\b/i, 'RPG'],
   [/shooter/i, 'Shooter'],
   [/platform/i, 'Platformer'],

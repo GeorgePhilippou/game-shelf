@@ -93,24 +93,40 @@ function closeness(title, query) {
   return t.includes(query) ? 2 : 3;
 }
 
+/* Wikipedia won't name a very wide image as a page's picture, which hides games like Minecraft
+   whose infobox only holds a logo, so read the infobox for those. */
+async function infoboxImage(pageTitle) {
+  const wiki = 'https://en.wikipedia.org/w/api.php';
+  const { parse } = await apiJson(wiki, { action: 'parse', page: pageTitle, prop: 'wikitext', section: '0' });
+  const file = parse?.wikitext?.['*'].match(/\|\s*image\s*=\s*(?:\[\[)?(?:File:|Image:)?([^<|\]{}\n]+\.\w+)/i)?.[1];
+  if (!file) return null;
+  const { query } = await apiJson(wiki, {
+    action: 'query', titles: `File:${file.trim()}`, prop: 'imageinfo', iiprop: 'url', iiurlwidth: '500',
+  });
+  return Object.values(query?.pages || {})[0]?.imageinfo?.[0]?.thumburl || null;
+}
+
 /* Two searches: the plain name finds exact titles, the suffixed one rescues names like Hades. */
 async function searchWikipedia(query) {
   const [plain, suffixed] = await Promise.all([wikipediaPages(query), wikipediaPages(`${query} video game`)]);
-  const pages = [...new Map([...plain, ...suffixed].map(p => [p.pageid, p])).values()]
-    .filter(p => p.thumbnail?.source);
+  const pages = [...new Map([...plain, ...suffixed].map(p => [p.pageid, p])).values()];
   const games = pages.filter(p => /\bgame\b/i.test(p.description || '')
     && !NOT_A_GAME.test(p.description || '') && !NOT_A_GAME_TITLE.test(p.title));
   const wanted = query.toLowerCase();
-  return (games.length ? games : pages)
+  const found = (games.length ? games : pages.filter(p => p.thumbnail?.source))
     .map(p => ({
       title: p.title.replace(/\s*\((?:[^)]*\b)?(?:video )?game\)$/i, ''),
       pageTitle: p.title,
       year: Number((p.description || '').match(/\b(19|20)\d{2}\b/)?.[0]) || null,
       description: p.description || '',
-      image: p.thumbnail.source,
+      image: p.thumbnail?.source || null,
     }))
     .sort((a, b) => closeness(a.title, wanted) - closeness(b.title, wanted))
     .slice(0, 15);
+  await Promise.all(found.filter(item => !item.image).map(async item => {
+    item.image = await infoboxImage(item.pageTitle).catch(() => null);
+  }));
+  return found.filter(item => item.image || closeness(item.title, wanted) === 0);
 }
 
 /* Shrinks any source image to a consistent JPEG so backups stay a sensible size. */
@@ -179,6 +195,22 @@ function blankCover(title) {
 /* Every game stands as an upright case. Art that isn't upright sits on a sleeve in its own colour. */
 const UPRIGHT = [0.6, 0.86];
 
+/* Logos arrive on plain white, which reads as a harsh strip on a coloured sleeve. */
+function onWhite(image) {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    const [right, bottom] = [image.naturalWidth - 1, image.naturalHeight - 1];
+    return [[0, 0], [right, 0], [0, bottom], [right, bottom]].filter(([x, y]) => {
+      ctx.drawImage(image, x, y, 1, 1, 0, 0, 1, 1);
+      return ctx.getImageData(0, 0, 1, 1).data.slice(0, 3).every(channel => channel > 245);
+    }).length >= 2;
+  } catch {
+    return false;
+  }
+}
+
 function averageColour(image) {
   try {
     const canvas = document.createElement('canvas');
@@ -203,7 +235,8 @@ function caseArt(game) {
     const ratio = image.naturalWidth / image.naturalHeight;
     if (ratio >= UPRIGHT[0] && ratio <= UPRIGHT[1]) return;
     art.classList.add('sleeve');
-    art.style.setProperty('--tone', averageColour(image));
+    if (onWhite(image)) art.classList.add('paper');
+    else art.style.setProperty('--tone', averageColour(image));
     art.append(el('span', { className: 'sleeve-title', textContent: game.title }));
   });
   art.append(image);
@@ -445,7 +478,7 @@ async function runSearch() {
 
 function resultButton(item) {
   const button = el('button', { type: 'button', className: 'result' },
-    el('img', { src: item.image, alt: '' }),
+    item.image ? el('img', { src: item.image, alt: '' }) : el('span', { className: 'result-blank', textContent: 'No cover' }),
     el('b', { textContent: item.title }),
     el('small', { textContent: item.year || item.description }));
   button.addEventListener('click', () => chooseResult(item));
@@ -455,10 +488,12 @@ function resultButton(item) {
 async function chooseResult(item) {
   $('searchStatus').textContent = `Downloading the cover of ${item.title}`;
   try {
-    draft.cover = await downloadCover(item.image);
-    draft.coverPath = null;
-    draft.coverCustom = false;
-    draft.coverUpright = false;
+    if (item.image) {
+      draft.cover = await downloadCover(item.image);
+      draft.coverPath = null;
+      draft.coverCustom = false;
+      draft.coverUpright = false;
+    }
     draft.sourcePage = item.pageTitle;
     await addLookups(draft, item.title);
   } catch (err) {
