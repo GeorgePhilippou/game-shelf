@@ -163,6 +163,27 @@
    "title": "Minecraft",
    "updated": 1793962265914,
    "year": null
+  },
+  {
+   "added": 1793963604534,
+   "coverCustom": false,
+   "coverPath": "covers/d64559da-4001-4f49-b310-beb681bae8d3-mw4vmkox.jpg",
+   "coverUpright": true,
+   "finished": "",
+   "format": "digital",
+   "genre": "Strategy & Sim",
+   "genreChecked": true,
+   "id": "d64559da-4001-4f49-b310-beb681bae8d3",
+   "notes": "",
+   "platform": "Mac",
+   "rating": 5,
+   "sourcePage": null,
+   "status": "finished",
+   "steamId": "3288180",
+   "title": "Tales Beyond The Tomb - Pineville Night Stalker",
+   "updated": 1793963624323,
+   "wikidataId": "Q135064762",
+   "year": 2024
   }
  ]
 }
